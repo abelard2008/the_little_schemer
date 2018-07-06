@@ -183,3 +183,44 @@
                 (3 peaches and 6 peppers)
                 (8 pears and 6 plums)
                 (and 6 prunes with some apples)))
+
+(define a-pair?
+  (lambda (x)
+    (cond
+      ((null? (cdr (cdr x))) #t)
+      (else #f))))
+
+(a-pair? '(3 7))
+(a-pair? '(full (house)))
+
+(define first
+  (lambda (p) (car p)))
+
+(define second
+  (lambda (p) (car (cdr p))))
+
+(define build
+  (lambda (s1 s2) (cons s1 (cons s2 (quote ())))))
+
+(define fun?
+  (lambda (rel)
+    (set? (firsts rel))))
+
+(fun? '((d 4) (b 0) (c 0) (e 5) (g 4)))
+
+(define revrel
+  (lambda (rel)
+    (cond
+      ((null? rel) (quote ()))
+      (else
+       (cons (build (second (car rel))
+                    (first (car rel)))
+             (revrel (cdr rel)))))))
+
+;(revrel '())
+(revrel '((8 a) (pumpkin pie) (got sick)))
+
+
+;(define fullfun?
+ ; (lambda (fun)
+  ;  (set? (seconds fun))))
