@@ -1,5 +1,6 @@
 #lang racket
 
+
 (define atom?
   (lambda (x)
     (and (not (pair? x)) (not (null? x)) )))
@@ -224,3 +225,119 @@
 ;(define fullfun?
  ; (lambda (fun)
   ;  (set? (seconds fun))))
+
+
+(define eqlist?
+  (lambda (l1 l2)
+    (cond
+      ((and (null? l1) (null? l2)) #t)
+      ((or (null? l1) (null? l2)) #f)
+      (else
+       (and (equal? (car l1) (car l2))
+            (eqlist? (cdr l1) (cdr l2)))))))
+
+(define equal?
+  (lambda (s1 s2)
+    (cond
+      ((and (atom? s1) (atom? s2))
+       (eq? s1 s2))
+      ((atom? s1) #f)
+      ((atom? s2) #f)
+      (else
+       (eqlist? s1 s2)))))
+(equal? '(a) '(a))
+
+(define rember-f
+  (lambda (test? a l)
+    (cond
+      ((null? l) (quote ()))
+      (else
+       (cond
+         ((test? (car l) a) (cdr l))
+         (else (cons (car l) (rember-f test? a (cdr l)))))))))
+
+(rember-f equal? '() '())
+(rember-f equal? '(pop corn) '(lemonade (pop corn) and (cake)))
+
+(define rember-f1
+  (lambda (test?)
+    (lambda (a l)
+      (cond
+        ((null? l) (quote ()))
+        ((test? (car l) a) (cdr l))
+        (else
+         (cons (car l) (rember-f1 test? a (cdr l))))))))
+
+(define insertL-f
+  (lambda (test?)
+    (lambda (new old l)
+      (cond
+        ((null? l) (quote ()))
+        ((test? (car l) old)
+         (cons new (cons old (cdr l))))
+        (else
+         (cons (car l)
+               ((insertL-f test?) new old (cdr l))))))))
+
+(define insertR-f
+  (lambda (test?)
+    (lambda (new old l)
+      (cond
+        ((null? l) (quote ()))
+        ((test? (car l) old)
+         (cons old (cons new (cdr l))))
+        (else
+         (cons (car l)
+               ((insertR-f test?) new old (cdr l))))))))
+
+((insertL-f eq?) 'hashmap 'list '(car list lisp))
+(define insert-g
+  (lambda (test?)
+    (lambda (left new old l)
+      (cond
+        ((null? l) (quote ()))
+        ((test? (car l) old)
+         (cond
+           ((eq? left #t) (cons new (cons old (cdr l))))
+           (else
+             (cons old (cons new (cdr l))))))
+        (else
+         (cons (car l)
+               ((insert-g test?) left new old (cdr l))))))))
+((insert-g eq?) '#f 'hashmap 'list '(car list lisp))
+
+(define update
+  (lambda (operate)
+  (lambda (new old l)
+    (cond
+      ((null? l) (quote ()))
+      ((eq? (car l) old)
+       (operate new old (cdr l)))
+      (else
+       (cons (car l)
+             ((update operate) new old (cdr l))))))))
+
+(define subst
+  (lambda (new old l)
+    (cons new l)))
+
+((update subst) 'hashmap 'list '(car cdr list array))
+
+(define multirember-f
+  (lambda (test?)
+    (lambda (a lat)
+      (cond
+        ((null? lat) (quote ()))
+        ((test? a (car lat))
+         ((multirember-f test?) a (cdr lat)))
+        (else (cons (car lat)
+                    ((multirember-f test?) a (cdr lat))))))))
+
+((multirember-f eq?) 'tuna '(shrimp salad tuna salad and tuna))
+
+(define multirember-eq? (multirember-f eq?))
+
+(define eq?-c
+  (lambda (a)
+    (lambda (x)
+      (eq? x a))))
