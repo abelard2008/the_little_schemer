@@ -341,3 +341,134 @@
   (lambda (a)
     (lambda (x)
       (eq? x a))))
+
+(define eq?-tuna
+  (eq?-c (quote tuna)))
+
+(define multiremberT
+  (lambda (test? lat)
+    (cond
+      ((null? lat) (quote ()))
+      ((test? (car lat))
+       (multiremberT test? (cdr lat)))
+      (else (cons (car lat)
+                  (multiremberT test?
+                                (cdr lat)))))))
+
+(multiremberT eq?-tuna '(shrimp salad tuna salad and tuna))
+
+(define multiremberTco
+  (lambda (a lat col)
+    (cond
+      ((null? lat) (col (quote ()) (quote ())))
+      ((eq? (car lat) a)
+       (multiremberTco a
+                       (cdr lat)
+                       (lambda (newlat seen)
+                         (col newlat
+                              (cons (car lat) seen)))))
+      (else
+       (multiremberTco a
+                       (cdr lat)
+                       (lambda (newlat seen)
+                         (col (cons (car lat) newlat) seen)))))))
+
+(define a-friend (lambda (x y) (null? y)))
+
+(multiremberTco 'tuna '(strawberries tuna and swordfish) a-friend)
+
+'(so)
+(multiremberTco 'tuna '(tuna and swordfish) (lambda (newlat seen)
+                                              (a-friend 
+                                               (cons 'tuna newlat) seen)))
+
+(multiremberTco 'tuna '(and swordfish)
+                (lambda (newlat seen)
+                ((lambda (newlat seen)
+                        (a-friend 
+                        (cons 'tuna newlat) seen))
+                 newlat
+                 (cons 'tuna seen))))
+
+(multiremberTco 'tuna '() a-friend)
+(multiremberTco 'tuna '(tuna) a-friend)
+(multiremberTco 'tuna '()
+                (lambda (newlat seen)
+                  (a-friend newlat
+                            (cons 'tuna seen))))
+((lambda (x) (+ 1 x)) 1)
+
+((lambda (newlat seen) (a-friend newlat (cons 'tuna seen))) '() '())
+
+(define multiinsertL
+  (lambda (new old lat)
+    (cond
+      ((null? lat) (quote ()))
+      ((eq? (car lat) old)
+       (cons new
+             (cons old
+                   (multiinsertL new old
+                                 (cdr lat)))))
+      (else (cons (car lat)
+                  (multiinsertL new old
+                                (cdr lat)))))))
+
+(define multiinsertR
+  (lambda (new old lat)
+    (cond
+      ((null? lat) (quote ()))
+      ((eq? (car lat) old)
+       (cons old
+             (cons new
+                   (multiinsertR new old
+                                 (cdr lat)))))
+      (else (cons (car lat)
+                  (multiinsertR new old
+                                (cdr lat)))))))
+
+(define multiinsertLR
+  (lambda (new oldL oldR lat)
+    (cond
+      ((null? lat) (quote ()))
+      ((eq? (car lat) oldL)
+       (cons new
+             (cons oldL
+                   (multiinsertLR new oldL oldR
+                                  (cdr lat)))))
+      ((eq? (car lat) oldR)
+       (cons oldR
+             (cons new
+                   (multiinsertLR new oldL oldR
+                                  (cdr lat)))))
+      (else
+       (cons (car lat)
+             (multiinsertLR new oldL oldR
+                            (cdr lat)))))))
+(define multiinsertLRco
+  (lambda (new oldL oldR lat col)
+    (cond
+      ((null? lat)
+       (col (quote ()) 0 0))
+      ((eq? (car lat) oldL)
+       (multiinsertLRco new oldL oldR
+                         (cdr lat)
+                         (lambda (newlat L R)
+                           (col (cons new
+                                      (cons oldL newlat))
+                                (add1 L) R))))
+      ((eq? (car lat) oldR)
+       (multiinsertLRco new oldL oldR
+                         (cdr lat)
+                         (lambda (newlat L R)
+                           (col (cons oldR
+                                      (cons new newlat))
+                                L (add1 R)))))
+      (else
+       (multiinsertLRco new oldL oldR
+                         (cdr lat)
+                         (lambda (newlat L R)
+                           (col (cons (car lat) newlat) L R))
+                           )))))
+(multiinsertLRco 'salty 'fish 'chips '(chips and fish or fish and chips)
+                 (lambda (lat x y)
+                   (cons lat (cons x (cons y '())))))
